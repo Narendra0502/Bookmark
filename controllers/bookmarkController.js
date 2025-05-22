@@ -5,27 +5,97 @@ const Bookmark = require('../models/bookmarkModel');
 // Utility function to extract metadata from URL
 async function extractMetadata(url) {
   try {
-    const response = await axios.get(url);
+    const response = await axios.get(url, {
+      timeout: 10000,
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+      }
+    });
     const $ = cheerio.load(response.data);
+    const urlObj = new URL(url);
     
     // Extract title
-    const title = $('title').text() || $('meta[property="og:title"]').attr('content') || url;
+    const title = $('title').text().trim() || 
+                 $('meta[property="og:title"]').attr('content')?.trim() || 
+                 $('meta[name="title"]').attr('content')?.trim() || 
+                 url;
     
-    // Extract favicon
-    let favicon = $('link[rel="icon"]').attr('href') || 
-                 $('link[rel="shortcut icon"]').attr('href') || 
-                 $('link[rel="apple-touch-icon"]').attr('href');
+    // Extract favicon with multiple selectors in priority order
+    let favicon = null;
     
-    // Handle relative favicon URLs
-    if (favicon && !favicon.startsWith('http')) {
-      const urlObj = new URL(url);
-      favicon = `${urlObj.protocol}//${urlObj.host}${favicon.startsWith('/') ? '' : '/'}${favicon}`;
+    // Try different favicon selectors in order of preference
+    const faviconSelectors = [
+      'link[rel="icon"][sizes="32x32"]',
+      'link[rel="icon"][sizes="16x16"]', 
+      'link[rel="shortcut icon"]',
+      'link[rel="icon"]',
+      'link[rel="apple-touch-icon"]',
+      'link[rel="apple-touch-icon-precomposed"]'
+    ];
+    
+    for (const selector of faviconSelectors) {
+      const faviconHref = $(selector).attr('href');
+      if (faviconHref) {
+        favicon = faviconHref;
+        break;
+      }
+    }
+    
+    // If no favicon found in HTML, try default locations
+    if (!favicon) {
+      const defaultPaths = ['/favicon.ico', '/favicon.png', '/apple-touch-icon.png'];
+      
+      for (const path of defaultPaths) {
+        try {
+          const testUrl = `${urlObj.protocol}//${urlObj.host}${path}`;
+          const testResponse = await axios.head(testUrl, { timeout: 5000 });
+          if (testResponse.status === 200) {
+            favicon = testUrl;
+            break;
+          }
+        } catch (error) {
+          // Continue to next default path
+          continue;
+        }
+      }
+    }
+    
+    // Convert relative URLs to absolute URLs
+    if (favicon) {
+      if (favicon.startsWith('//')) {
+        // Protocol-relative URL
+        favicon = `${urlObj.protocol}${favicon}`;
+      } else if (favicon.startsWith('/')) {
+        // Root-relative URL  
+        favicon = `${urlObj.protocol}//${urlObj.host}${favicon}`;
+      } else if (!favicon.startsWith('http')) {
+        // Relative URL
+        favicon = `${urlObj.protocol}//${urlObj.host}/${favicon}`;
+      }
+      
+      // Validate the favicon URL works
+      try {
+        const faviconResponse = await axios.head(favicon, { timeout: 5000 });
+        if (faviconResponse.status !== 200) {
+          favicon = `${urlObj.protocol}//${urlObj.host}/favicon.ico`; // Fallback
+        }
+      } catch (error) {
+        console.log(`Favicon validation failed for ${favicon}, using fallback`);
+        favicon = `${urlObj.protocol}//${urlObj.host}/favicon.ico`;
+      }
+    } else {
+      // Ultimate fallback
+      favicon = `${urlObj.protocol}//${urlObj.host}/favicon.ico`;
     }
     
     return { title, favicon };
   } catch (error) {
     console.error('Error extracting metadata:', error);
-    return { title: url, favicon: '' };
+    const urlObj = new URL(url);
+    return { 
+      title: url, 
+      favicon: `${urlObj.protocol}//${urlObj.host}/favicon.ico` 
+    };
   }
 }
 
@@ -69,37 +139,31 @@ async function generateSummary(url) {
     
     // Handle different response formats from Jina AI
     // Based on your logs, the structure is: response.data.data.content
-    if (content.data && content.data.content && typeof content.data.content === 'string') {
-      textToProcess = content.data.content;
-    } else if (content.data && typeof content.data === 'string') {
-      textToProcess = content.data;
-    } else if (content.content && typeof content.content === 'string') {
-      textToProcess = content.content;
-    } else if (content.text && typeof content.text === 'string') {
-      textToProcess = content.text;
-    } else if (typeof content === 'string') {
-      textToProcess = content;
-    } else {
-      // If none of the above, try to extract from nested structure
-      console.log('Trying to extract text from complex structure...');
+    if (content.data) {
+      // Combine title and description if available
+      const title = content.data.title || '';
+      const description = content.data.description || '';
       
-      // Try to find any string content in the response
-      const findStringContent = (obj) => {
-        if (typeof obj === 'string' && obj.length > 100) {
-          return obj;
-        }
-        if (typeof obj === 'object' && obj !== null) {
-          for (const key in obj) {
-            if (obj.hasOwnProperty(key)) {
-              const result = findStringContent(obj[key]);
-              if (result) return result;
-            }
-          }
-        }
-        return null;
-      };
+      if (description) {
+        return description; // Use description as summary if available
+      }
       
-      textToProcess = findStringContent(content) || '';
+      textToProcess = [
+        content.data.content,
+        content.data.description,
+        content.data.title
+      ].filter(Boolean).join(' ');
+    }
+
+    // If no meaningful text was found, return the description or title
+    if (!textToProcess || textToProcess.length < 30) {
+      if (content.data && content.data.description) {
+        return content.data.description;
+      }
+      if (content.data && content.data.title) {
+        return `${content.data.title} webpage`;
+      }
+      return 'No summary available';
     }
 
     console.log('Text to process length:', textToProcess.length);
@@ -151,7 +215,7 @@ async function generateSummary(url) {
   } catch (error) {
     console.error('Jina AI Error:', error.response?.data || error.message);
     console.error('Full error:', error);
-    return '';
+    return 'No summary available';
   }
 }
 
