@@ -47,6 +47,6 @@ userSchema.methods.matchPassword = async function(enteredPassword) {
 
 
 
-const User = mongoose.model('User', userSchema);
+const User = mongoose.model('BookmarkUser', userSchema);
 
 module.exports = User;
