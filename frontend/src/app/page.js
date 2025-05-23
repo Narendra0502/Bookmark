@@ -1,8 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import axios from 'axios';
-import {toast ,Toaster} from 'react-hot-toast';
+import axios from "axios"
+import Axios from '../utils/Axios';
+import { toast, Toaster } from 'react-hot-toast';
 
 import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 import { FiTrash2, FiPlus, FiLogOut, FiTag, FiSearch, FiFilter, FiX } from 'react-icons/fi';
@@ -19,7 +20,7 @@ const API_URL = 'https://bookmark-kkxc.onrender.com/api';
 
 export default function Home() {
   const router = useRouter(); // Add router instance
-  
+
   // State
   const [user, setUser] = useState(null);
   const [bookmarks, setBookmarks] = useState([]);
@@ -40,9 +41,9 @@ export default function Home() {
               Authorization: `Bearer ${token}`,
             },
           };
-          
+
           // Verify token and get user data
-          const { data } = await axios.get(`${API_URL}/users/profile`, config);
+          const { data } = await Axios.get(`${API_URL}/users/profile`, config);
           setUser(data);
           fetchBookmarks(token);
         } catch (error) {
@@ -71,7 +72,7 @@ export default function Home() {
         params: tag ? { tag } : {},
       };
 
-      const { data } = await axios.get(`${API_URL}/bookmarks`, config);
+      const { data } = await Axios.get(`${API_URL}/bookmarks`, config);
       setBookmarks(data);
 
       // Extract all unique tags
@@ -92,7 +93,7 @@ export default function Home() {
   const handleLogin = async (credentials) => {
     try {
       setLoading(true);
-      const { data } = await axios.post(`${API_URL}/users/login`, credentials, { withCredentials: true });
+      const { data } = await Axios.post(`${API_URL}/users/login`, credentials, { withCredentials: true });
       localStorage.setItem('token', data.token);
       setUser(data);
       fetchBookmarks(data.token);
@@ -109,7 +110,7 @@ export default function Home() {
   const handleRegister = async (userData) => {
     try {
       setLoading(true);
-      const { data } = await axios.post(`${API_URL}/users/register`, userData);
+      const { data } = await Axios.post(`${API_URL}/users/register`, userData);
       localStorage.setItem('token', data.token);
       setUser(data);
       toast.success('Registration successful!');
@@ -130,44 +131,44 @@ export default function Home() {
   // };
 
   // Add bookmark
-const handleAddBookmark = async (bookmarkData) => {
-  // Check for empty fields
-  if (!bookmarkData.title || !bookmarkData.url) {
-    toast.error('Title and URL are required');
-    return;
-  }
-  
-  // Check if tags array exists and has at least one tag
-  if (!bookmarkData.tags || bookmarkData.tags.length === 0) {
-    toast.error('At least one tag is required');
-    return;
-  }
-  
-  try {
-    setLoading(true);
-    const token = localStorage.getItem('token');
-    const config = {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    };
+  const handleAddBookmark = async (bookmarkData) => {
+    // Check for empty fields
+    if (!bookmarkData.title || !bookmarkData.url) {
+      toast.error('Title and URL are required');
+      return;
+    }
 
-    const { data } = await axios.post(`${API_URL}/bookmarks`, bookmarkData, config);
-    setBookmarks([...bookmarks, data]);
-    setShowAddForm(false);
-    toast.success('Bookmark added!');
+    // Check if tags array exists and has at least one tag
+    if (!bookmarkData.tags || bookmarkData.tags.length === 0) {
+      toast.error('At least one tag is required');
+      return;
+    }
 
-    // Update tags
-    const newTags = new Set(allTags);
-    bookmarkData.tags.forEach((tag) => newTags.add(tag));
-    setAllTags(Array.from(newTags));
-  } catch (error) {
-    console.error('Add bookmark error:', error);
-    toast.error(error.response?.data?.message || 'Failed to add bookmark');
-  } finally {
-    setLoading(false);
-  }
-};
+    try {
+      setLoading(true);
+      const token = localStorage.getItem('token');
+      const config = {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      };
+
+      const { data } = await Axios.post(`${API_URL}/bookmarks`, bookmarkData, config);
+      setBookmarks([...bookmarks, data]);
+      setShowAddForm(false);
+      toast.success('Bookmark added!');
+
+      // Update tags
+      const newTags = new Set(allTags);
+      bookmarkData.tags.forEach((tag) => newTags.add(tag));
+      setAllTags(Array.from(newTags));
+    } catch (error) {
+      console.error('Add bookmark error:', error);
+      toast.error(error.response?.data?.message || 'Failed to add bookmark');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Delete bookmark
   const handleDeleteBookmark = async (id) => {
@@ -180,7 +181,7 @@ const handleAddBookmark = async (bookmarkData) => {
         },
       };
 
-      await axios.delete(`${API_URL}/bookmarks/${id}`, config);
+      await Axios.delete(`${API_URL}/bookmarks/${id}`, config);
 
       // Update the bookmarks state immediately
       setBookmarks(prevBookmarks => prevBookmarks.filter(bookmark => bookmark._id !== id));
@@ -210,6 +211,7 @@ const handleAddBookmark = async (bookmarkData) => {
     const [reorderedItem] = items.splice(result.source.index, 1);
     items.splice(result.destination.index, 0, reorderedItem);
 
+    // Update local state immediately for better UX
     setBookmarks(items);
 
     try {
@@ -220,14 +222,22 @@ const handleAddBookmark = async (bookmarkData) => {
         },
       };
 
-      await axios.put(
-        `${API_URL}/bookmarks/reorder`,
-        { bookmarkIds: items.map((item) => item._id) },
-        config
-      );
+      // Prepare the reorder data with new positions
+      const reorderData = {
+        bookmarkIds: items.map((bookmark, index) => ({
+          id: bookmark._id,
+          order: index
+        }))
+      };
+
+      // Call the API to update the order in the database
+      await Axios.put(`${API_URL}/bookmarks/reorder`, reorderData, config);
+      toast.success('Bookmarks reordered successfully');
     } catch (error) {
-      console.error('Reorder error:', error);
+      console.error('Error reordering bookmarks:', error);
       toast.error('Failed to save bookmark order');
+      // Revert to original order if API call fails
+      fetchBookmarks(localStorage.getItem('token'), selectedTag);
     }
   };
 
@@ -255,7 +265,7 @@ const handleAddBookmark = async (bookmarkData) => {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
-     <Toaster />
+      <Toaster />
       {!user ? (
         <div className="max-w-md mx-auto py-8 sm:py-12 px-4">
           <div className="glass-card p-6 sm:p-8 rounded-2xl">
@@ -269,8 +279,8 @@ const handleAddBookmark = async (bookmarkData) => {
             <div className="flex justify-center space-x-2 sm:space-x-4 mb-6 sm:mb-8">
               <button
                 className={`px-4 sm:px-6 py-2 sm:py-3 rounded-xl font-medium transition-all duration-300 text-sm sm:text-base ${showLoginForm
-                    ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                   }`}
                 onClick={() => setShowLoginForm(true)}
               >
@@ -278,8 +288,8 @@ const handleAddBookmark = async (bookmarkData) => {
               </button>
               <button
                 className={`px-4 sm:px-6 py-2 sm:py-3 rounded-xl font-medium transition-all duration-300 text-sm sm:text-base ${!showLoginForm
-                    ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                   }`}
                 onClick={() => setShowLoginForm(false)}
               >
@@ -339,8 +349,8 @@ const handleAddBookmark = async (bookmarkData) => {
                     key={tag}
                     onClick={() => handleTagFilter(tag)}
                     className={`px-3 sm:px-4 py-2 rounded-full text-xs sm:text-sm font-medium transition-all duration-300 ${selectedTag === tag
-                        ? 'bg-blue-600 text-white shadow-md'
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      ? 'bg-blue-600 text-white shadow-md'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                       }`}
                   >
                     <FiTag className="inline-block w-3 h-3 sm:w-4 sm:h-4 mr-1" />
@@ -365,21 +375,29 @@ const handleAddBookmark = async (bookmarkData) => {
                   ref={provided.innerRef}
                   className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-6 sm:gap-8"
                 >
+            
+
                   {bookmarks.map((bookmark, index) => (
                     <Draggable
                       key={bookmark._id}
                       draggableId={bookmark._id}
                       index={index}
                     >
-                      {(provided) => (
+                      {(provided, snapshot) => (
                         <div
                           ref={provided.innerRef}
                           {...provided.draggableProps}
-                          {...provided.dragHandleProps}
+                          style={{
+                            ...provided.draggableProps.style,
+                            transform: snapshot.isDragging
+                              ? provided.draggableProps.style?.transform
+                              : 'none',
+                          }}
                         >
                           <BookmarkCard
                             bookmark={bookmark}
                             onDelete={handleDeleteBookmark}
+                            dragHandleProps={provided.dragHandleProps}
                           />
                         </div>
                       )}
