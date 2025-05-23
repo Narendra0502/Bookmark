@@ -103,24 +103,25 @@ const AddBookmarkForm = ({ onAddBookmark, onClose }) => {
           <label htmlFor="tags" className="block text-sm font-medium text-gray-700 mb-1">
             Tags (Optional)
           </label>
-          <div className="flex">
-            <input
-              type="text"
-              id="tags"
-              value={currentTag}
-              onChange={(e) => setCurrentTag(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder="Add tags"
-              className="flex-1 px-4 py-2 border border-gray-300 rounded-l-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            />
-            <button
-              type="button"
-              onClick={addTag}
-              className="px-4 py-2 bg-blue-600 text-white rounded-r-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <FiPlus className="w-5 h-5" />
-            </button>
-          </div>
+         <div className="flex flex-col sm:flex-row gap-2">
+  <input
+    type="text"
+    id="tags"
+    value={currentTag}
+    onChange={(e) => setCurrentTag(e.target.value)}
+    onKeyDown={handleKeyDown}
+    placeholder="Add tags"
+    className="w-full px-4 py-2 border border-gray-300 rounded-lg sm:rounded-r-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+  />
+  <button
+    type="button"
+    onClick={addTag}
+    className="w-full sm:w-auto px-4 py-2 bg-blue-600 text-white rounded-lg sm:rounded-l-none hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+  >
+    <FiPlus className="w-5 h-5 mx-auto sm:mx-0" />
+  </button>
+</div>
+
           
           {tags.length > 0 && (
             <div className="flex flex-wrap gap-2 mt-3">
