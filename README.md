@@ -1,3 +1,11 @@
+You can check out the live version of the Bookmark Project at the link below:
+
+🔗 View Live Project
+
+This is the fully functional deployed version of the app hosted on Vercel. You can add, view, and manage bookmarks directly in your browser.
+
+
+
 # Link Saver + Auto-Summary
 📽️ Demo Video
 
