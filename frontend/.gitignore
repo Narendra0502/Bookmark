@@ -1,0 +1,43 @@
+# dependencies
+/node_modules
+
+# production build
+/build
+
+# misc
+.DS_Store
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# testing
+/coverage
+
+# IDEs and editors
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+
+# logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# parcel-bundler cache (if used)
+.cache
+
+# dotenv environment variables
+.env*
+
+# Mac system files
+*.DS_Store
+
+# Linux/Mac trash folder
+.Trash-*
+
+# Windows system files
+Thumbs.db
