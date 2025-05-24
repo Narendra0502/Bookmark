@@ -16,7 +16,9 @@ import BookmarkCard from '../components/BookmarkCard';
 import AddBookmarkForm from '../components/AddBookmarkForm';
 
 // const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
-const API_URL = 'https://bookmark-kkxc.onrender.com/api';
+ // const API_URL = 'https://bookmark-kkxc.onrender.com/api';
+ const API_URL = 'https://bookmark-kkxc.onrender.com/api';
+
 
 export default function Home() {
   const router = useRouter(); // Add router instance
