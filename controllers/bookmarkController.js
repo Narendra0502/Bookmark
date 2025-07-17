@@ -102,120 +102,35 @@ async function extractMetadata(url) {
 // Function to generate summary using Jina AI
 async function generateSummary(url) {
   try {
-    const apiKey = process.env.JINA_API_KEY;
-    if (!apiKey) {
-      console.warn('Jina API key not found');
-      return '';
-    }
-
-    console.log('Calling Jina AI for URL:', url);
-
-    // Use Jina AI Reader API - correct endpoint
-    const response = await axios.get(`https://r.jina.ai/${encodeURIComponent(url)}`, {
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'Accept': 'application/json'
-      },
-      timeout: 30000 // 30 second timeout
+    console.log('Starting summary generation for URL:', url);
+    
+    // URL encode the target URL
+    const target = encodeURIComponent(url);
+    
+    // Call the Jina AI API as described in the requirements
+    const response = await axios.get(`https://r.jina.ai/http://${target}`, {
+      timeout: 15000 // 15 second timeout
     });
-
-    console.log('Jina AI response status:', response.status);
-    console.log('Jina AI response data:', response.data);
-
-    // Extract content from Jina AI response
-    const content = response.data;
     
-    if (!content) {
-      console.log('No content returned from Jina AI');
-      return '';
-    }
-
-    console.log('Content type:', typeof content);
-    console.log('Content structure:', Object.keys(content));
-
-    // Generate summary from the content
-    let summary = '';
-    let textToProcess = '';
+    // Get the plain text summary
+    let summary = response.data;
     
-    // Handle different response formats from Jina AI
-    // Based on your logs, the structure is: response.data.data.content
-    if (content.data) {
-      // Combine title and description if available
-      const title = content.data.title || '';
-      const description = content.data.description || '';
-      
-      if (description) {
-        return description; // Use description as summary if available
-      }
-      
-      textToProcess = [
-        content.data.content,
-        content.data.description,
-        content.data.title
-      ].filter(Boolean).join(' ');
+    // Handle if the response is not a string
+    if (typeof summary !== 'string') {
+      summary = 'Summary temporarily unavailable.';
     }
-
-    // If no meaningful text was found, return the description or title
-    if (!textToProcess || textToProcess.length < 30) {
-      if (content.data && content.data.description) {
-        return content.data.description;
-      }
-      if (content.data && content.data.title) {
-        return `${content.data.title} webpage`;
-      }
-      return 'No summary available';
+    
+    // Trim the summary if it's too long
+    if (summary.length > 500) {
+      summary = summary.substring(0, 497) + '...';
     }
-
-    console.log('Text to process length:', textToProcess.length);
-    console.log('First 200 chars:', textToProcess.substring(0, 200));
-
-    if (textToProcess && typeof textToProcess === 'string' && textToProcess.length > 0) {
-      // Clean and process the text
-      const cleanedText = textToProcess.replace(/\s+/g, ' ').trim();
-      
-      // Remove YouTube UI elements and navigation text
-      const filteredText = cleanedText
-        .replace(/Skip navigation|Search|Watch later|Share|Copy link|Info|Shopping|Tap to unmute/gi, '')
-        .replace(/Subscribe|Subscribed|Like|Dislike|Reply|Show less|Read more/gi, '')
-        .replace(/\d+K?\s*(views|subscribers|likes)/gi, '')
-        .replace(/\d+:\d+/g, '') // Remove timestamps
-        .replace(/Image \d+:/g, '') // Remove image references
-        .replace(/\[.*?\]/g, '') // Remove bracketed content
-        .replace(/https?:\/\/[^\s]+/g, '') // Remove URLs
-        .trim();
-      
-      // Split into sentences and find meaningful content
-      const sentences = filteredText.split(/[.!?]+/).filter(sentence => {
-        const trimmed = sentence.trim();
-        return trimmed.length > 30 && 
-               !trimmed.match(/^\d+$/) && // Not just numbers
-               !trimmed.match(/^[^\w]*$/) && // Not just special characters
-               trimmed.includes(' '); // Contains at least one space
-      });
-      
-      console.log('Found meaningful sentences:', sentences.length);
-      
-      if (sentences.length > 0) {
-        // Get the first few meaningful sentences
-        summary = sentences.slice(0, 2).join('. ').trim();
-        if (summary && !summary.endsWith('.')) {
-          summary += '.';
-        }
-        
-        // If summary is too long, truncate it
-        if (summary.length > 300) {
-          summary = summary.substring(0, 297) + '...';
-        }
-      }
-    }
-
-    console.log('Generated summary:', summary);
-    return summary || '';
+    
+    console.log('Summary generation completed. Length:', summary.length);
+    return summary;
     
   } catch (error) {
-    console.error('Jina AI Error:', error.response?.data || error.message);
-    console.error('Full error:', error);
-    return 'No summary available';
+    console.error('Summary generation error:', error.message);
+    return 'Summary temporarily unavailable.';
   }
 }
 
@@ -224,26 +139,33 @@ async function generateSummary(url) {
 // @access  Private
 const createBookmark = async (req, res) => {
   try {
-    const { url, tags } = req.body;
+    const { url, tags, title: customTitle } = req.body;
     
     // Validate URL
-    if (!url || !url.startsWith('http')) {
-      return res.status(400).json({ message: 'Valid URL is required' });
+    if (!url) {
+      return res.status(400).json({ message: 'URL is required' });
+    }
+    
+    // Ensure URL has http:// or https:// prefix
+    let formattedUrl = url;
+    if (!formattedUrl.startsWith('http://') && !formattedUrl.startsWith('https://')) {
+      formattedUrl = 'https://' + formattedUrl;
     }
     
     // Check if bookmark already exists for this user
-    const existingBookmark = await Bookmark.findOne({ userId: req.user._id, url });
+    const existingBookmark = await Bookmark.findOne({ userId: req.user._id, url: formattedUrl });
     if (existingBookmark) {
       return res.status(400).json({ message: 'Bookmark already exists' });
     }
 
     // Extract metadata from URL
-    const { title, favicon } = await extractMetadata(url);
+    const { title: extractedTitle, favicon } = await extractMetadata(formattedUrl);
+    
+    // Use custom title if provided, otherwise use extracted title
+    const title = customTitle || extractedTitle;
     
     // Generate summary using Jina AI
-    console.log('Starting summary generation for URL:', url);
-    const summary = await generateSummary(url);
-    console.log('Summary generation completed:', summary);
+    const summary = await generateSummary(formattedUrl);
 
     // Get the highest order number for this user
     const highestOrderBookmark = await Bookmark.findOne({ userId: req.user._id })
@@ -255,20 +177,16 @@ const createBookmark = async (req, res) => {
     // Create bookmark
     const bookmarkData = {
       userId: req.user._id,
-      url,
+      url: formattedUrl,
       title,
       favicon,
       summary: summary || '',
-      tags: tags || [],
+      tags: tags || ['uncategorized'],
       order
     };
     
-    console.log('Creating bookmark with summary:', bookmarkData.summary);
-    
     const bookmark = await Bookmark.create(bookmarkData);
     
-    console.log('Bookmark created successfully with summary length:', bookmark.summary.length);
-
     res.status(201).json(bookmark);
     
   } catch (error) {
@@ -403,18 +321,12 @@ const regenerateSummary = async (req, res) => {
       return res.status(404).json({ message: 'Bookmark not found' });
     }
     
-    console.log('Regenerating summary for bookmark:', bookmark.url);
-    
     // Generate new summary using Jina AI
     const summary = await generateSummary(bookmark.url);
-    
-    console.log('New summary generated:', summary);
     
     // Update bookmark with new summary
     bookmark.summary = summary || '';
     const updatedBookmark = await bookmark.save();
-    
-    console.log('Bookmark updated with new summary length:', updatedBookmark.summary.length);
     
     res.json(updatedBookmark);
     
@@ -439,10 +351,10 @@ const reorderBookmarks = async (req, res) => {
     }
     
     // Update order for each bookmark
-    const updatePromises = bookmarkIds.map((id, index) => {
+    const updatePromises = bookmarkIds.map(({ id, order }) => {
       return Bookmark.findOneAndUpdate(
         { _id: id, userId: req.user._id },
-        { order: index },
+        { order },
         { new: true }
       );
     });

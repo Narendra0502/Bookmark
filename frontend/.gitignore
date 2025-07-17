@@ -1,15 +1,34 @@
 # dependencies
 /node_modules
+/.pnp
+.pnp.js
 
-# production build
+# next.js
+/.next/
+/out/
+
+# production
 /build
 
 # misc
 .DS_Store
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
+*.pem
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# local env files
+.env*.local
+.env
+
+# vercel
+.vercel
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
 
 # testing
 /coverage
@@ -22,22 +41,15 @@
 *.njsproj
 *.sln
 
-# logs
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-
-# parcel-bundler cache (if used)
-.cache
-
-# dotenv environment variables
-.env*
+# cache
+.cache/
 
 # Mac system files
-*.DS_Store
+.DS_Store
 
 # Linux/Mac trash folder
 .Trash-*
 
 # Windows system files
 Thumbs.db
+desktop.ini

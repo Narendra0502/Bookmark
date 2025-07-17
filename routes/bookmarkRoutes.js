@@ -29,6 +29,11 @@ router.get('/', protect, getBookmarks);
 // @access  Private
 router.get('/:id', protect, getBookmarkById);
 
+// @route   PUT /api/bookmarks/reorder
+// @desc    Reorder bookmarks
+// @access  Private
+router.put('/reorder', protect, reorderBookmarks);
+
 // @route   PUT /api/bookmarks/:id
 // @desc    Update a bookmark
 // @access  Private
@@ -43,10 +48,5 @@ router.delete('/:id', protect, deleteBookmark);
 // @desc    Regenerate summary for a bookmark
 // @access  Private
 router.post('/:id/regenerate-summary', protect, regenerateSummary);
-
-// @route   PUT /api/bookmarks/reorder
-// @desc    Reorder bookmarks
-// @access  Private
-router.put('/reorder', protect, reorderBookmarks);
 
 module.exports = router;
