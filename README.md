@@ -1,5 +1,62 @@
-# Link Saver + Auto-Summary
+You can check out the live version of the Bookmark Project at the link below:
 
+🔗 View Live Project
+
+This is the fully functional deployed version of the app hosted on Vercel. You can add, view, and manage bookmarks directly in your browser.
+
+
+
+# Link Saver + Auto-Summary
+📽️ Demo Video
+
+### 🎥 [Watch the demo video here](https://drive.google.com/file/d/1XgCtyOSR2Jzs8fCwWULJu9W_ekqTgG8C/view?usp=sharing)
+
+
+
+## 🖼️ Project Images
+
+You can view all project-related images in the Google Drive folder linked below:
+
+🔗 [Click here to open the image folder](https://drive.google.com/drive/folders/1z6nMN7TdDHiSigCTdn-mNlhNFNVN4xBT?usp=drive_link)
+
+> This folder contains screenshots and UI previews of the project.
+
+
+
+A full-stack application where users can save bookmarks with auto-generat## Environment Variables
+
+### Backend
+- `PORT` - Server port (default: 5000)
+- `MONGODB_URI` - MongoDB connection string
+- `JWT_SECRET` - Secret for JWT token generation
+- `JINA_AI_KEY` - Jina AI API key for summarization
+
+### Frontend
+- `NEXT_PUBLIC_API_URL` - URL of the backend API (default: http://localhost:5000/api)
+- `NEXT_PUBLIC_APP_NAME` - Application name for branding
+- `NEXT_PUBLIC_DEFAULT_THEME` - Default theme setting (light/dark)
+
+#### Frontend Tech Stack Details
+- **Runtime Environment**: Node.js v14+
+- **Framework**: Next.js 13 (React Framework)
+- **Language**: JavaScript/TypeScript
+- **Styling**: 
+  - Tailwind CSS for utility-first styling
+  - PostCSS for processing
+  - CSS Modules for component styling
+- **State Management**: React Hooks + Context API
+- **Package Manager**: npm/yarn
+- **Development Tools**:
+  - ESLint for code linting
+  - Prettier for code formatting
+  - PostCSS for CSS processing
+  - Autoprefixer for CSS compatibility
+
+#### Build & Development
+- Development server runs on port 3000
+- Production builds are optimized for performance
+- Automatic code splitting for optimal loading
+- Static file serving from public directoryes using Jina AI.
 A full-stack application where users can save bookmarks with auto-generat## Environment Variables
 
 ### Backend
