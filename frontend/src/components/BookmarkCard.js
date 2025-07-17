@@ -82,17 +82,17 @@ const BookmarkCard = ({ bookmark, onDelete, dragHandleProps, isDragging }) => {
           <div className="flex items-start space-x-4 flex-1 min-w-0">
             {bookmark.favicon && <Favicon src={bookmark.favicon} />}
             <div className="flex-1 min-w-0">
-              <h3 className="font-semibold text-gray-900 text-base leading-tight mb-1 line-clamp-2">
+              <h3 className="font-semibold text-gray-900 dark:text-gray-100 text-base leading-tight mb-1 line-clamp-2">
                 {bookmark.title || 'Untitled Bookmark'}
               </h3>
-              <p className="text-sm text-gray-500 truncate">
+              <p className="text-sm text-gray-500 dark:text-gray-300 truncate">
                 {truncateText(bookmark.url, 40)}
               </p>
             </div>
           </div>
           <button
             onClick={handleDelete}
-            className="delete-button flex-shrink-0 p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors duration-200"
+            className="delete-button flex-shrink-0 p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900 rounded-lg transition-colors duration-200"
             aria-label="Delete bookmark"
           >
             <FiTrash2 className="w-4 h-4" />
@@ -101,7 +101,7 @@ const BookmarkCard = ({ bookmark, onDelete, dragHandleProps, isDragging }) => {
         
         {bookmark.summary && (
           <div className="mt-4">
-            <p className="text-sm text-gray-600 leading-relaxed line-clamp-3">
+            <p className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed line-clamp-3">
               {truncateText(bookmark.summary, 60)}
             </p>
           </div>
@@ -119,8 +119,8 @@ const BookmarkCard = ({ bookmark, onDelete, dragHandleProps, isDragging }) => {
         )}
         
         {bookmark.createdAt && (
-          <div className="mt-4 pt-3 border-t border-gray-100">
-            <p className="text-xs text-gray-400">
+          <div className="mt-4 pt-3 border-t border-gray-100 dark:border-gray-700">
+            <p className="text-xs text-gray-400 dark:text-gray-500">
               Added {new Date(bookmark.createdAt).toLocaleDateString()}
             </p>
           </div>
