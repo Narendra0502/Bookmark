@@ -9,7 +9,7 @@ This is the fully functional deployed version of the app hosted on Vercel. You c
 # Link Saver + Auto-Summary
 📽️ Demo Video
 
-### 🎥 [Watch the demo video here](https://drive.google.com/file/d/1XgCtyOSR2Jzs8fCwWULJu9W_ekqTgG8C/view?usp=sharing)
+### 🎥 [Watch the demo video here](https://drive.google.com/file/d/1hggGnQ3JsCI8DjhH0Z8C-9DcQl9sTyxK/view?usp=sharing)
 
 
 
@@ -17,7 +17,7 @@ This is the fully functional deployed version of the app hosted on Vercel. You c
 
 You can view all project-related images in the Google Drive folder linked below:
 
-🔗 [Click here to open the image folder](https://drive.google.com/drive/folders/1z6nMN7TdDHiSigCTdn-mNlhNFNVN4xBT?usp=drive_link)
+🔗 [Click here to open the image folder](https://drive.google.com/drive/folders/1W7msDGI-NNjDz1XyZphlK0eSJmljzlLe?usp=sharing)
 
 > This folder contains screenshots and UI previews of the project.
 
